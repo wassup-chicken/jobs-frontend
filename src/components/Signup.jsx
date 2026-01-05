@@ -37,12 +37,19 @@ const Form = ({ auth }) => {
 
         //navigate to log in to have them sign in again...
         //send email to confirm then have them log in
+        setEmail("");
+        setPassword("");
+        setConfirmPw("");
       })
       .catch((error) => {
         const errorCode = error.code;
         const errorMsg = error.message;
-
         alert(errorMsg);
+        setEmail("");
+        setPassword("");
+        setConfirmPw("");
+
+        // alert(errorMsg);
       });
   };
 
@@ -55,30 +62,33 @@ const Form = ({ auth }) => {
             onChange={handleEmail}
             id="email"
             name="email"
-            className="border-2 m-0.5"
+            className="border-2 m-0.5 rounded-sm p-1"
             type="email"
+            value={email}
             placeholder="Email"
           />
           <input
             onChange={handlePassword}
             id="password"
             name="password"
-            className="border-2 m-0.5"
+            className="border-2 m-0.5 rounded-sm p-1"
             type="password"
+            value={password}
             placeholder="Password"
           />
           <input
             onChange={handleConfirmPw}
             id="password"
             name="password"
-            className="border-2 m-0.5"
+            className="border-2 m-0.5 rounded-sm p-1"
             type="password"
+            value={confirmPw}
             placeholder="Confirm Password"
           />
           <button
             type="button"
             onClick={handleSubmit}
-            className="border-2 m-3 bg-emerald-400"
+            className="border-2 m-3 bg-emerald-400 rounded-sm"
           >
             Submit
           </button>

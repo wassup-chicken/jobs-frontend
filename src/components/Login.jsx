@@ -33,11 +33,16 @@ const Form = ({ auth }) => {
         const user = userCredential.user;
         console.log(user);
         // ...
+        setEmail("");
+        setPassword("");
       })
       .catch((error) => {
         const errorMessage = error.message;
 
         alert(errorMessage);
+
+        setEmail("");
+        setPassword("");
       });
   };
 
@@ -50,22 +55,24 @@ const Form = ({ auth }) => {
             onChange={handleEmail}
             id="email"
             name="email"
-            className="border-2 m-0.5"
+            className="border-2 m-0.5 rounded-sm p-1"
             type="email"
+            value={email}
             placeholder="Email"
           />
           <input
             onChange={handlePassword}
             id="password"
             name="password"
-            className="border-2 m-0.5"
+            className="border-2 m-0.5 rounded-sm p-1"
             type="password"
+            value={password}
             placeholder="Password"
           />
           <button
             type="button"
             onClick={handleSubmit}
-            className="border-2 m-3 bg-emerald-400"
+            className="border-2 m-3 bg-emerald-400 rounded-sm"
           >
             Submit
           </button>
