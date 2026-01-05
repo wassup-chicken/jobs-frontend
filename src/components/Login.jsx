@@ -1,6 +1,11 @@
 import { useState } from "react";
+import {
+  signInWithEmailAndPassword,
+  setPersistence,
+  browserLocalPersistence,
+} from "firebase/auth";
 
-const Form = () => {
+const Form = ({ auth }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const handleEmail = (e) => {
@@ -12,18 +17,33 @@ const Form = () => {
   };
 
   const handleSubmit = (e) => {
+    e.preventDefault();
     //fetch authenticate
     if (email === "" || password === "") {
       alert("EMPTY!");
       return;
     }
 
-    console.log("you madeee it:)");
+    setPersistence(auth, browserLocalPersistence)
+      .then(() => {
+        return signInWithEmailAndPassword(auth, email, password);
+      })
+      .then((userCredential) => {
+        // Signed in
+        const user = userCredential.user;
+        console.log(user);
+        // ...
+      })
+      .catch((error) => {
+        const errorMessage = error.message;
+
+        alert(errorMessage);
+      });
   };
 
   return (
     <>
-      <h1 className="text-2xl align-text-top">Sign Up/Log In</h1>
+      <h1 className="text-2xl align-text-top">Log In</h1>
       <div className="flex justify-center">
         <form className="flex flex-col m-2 w-md">
           <input

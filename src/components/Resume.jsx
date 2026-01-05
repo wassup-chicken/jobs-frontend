@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-const Resume = () => {
+const Resume = ({ auth }) => {
   const [resume, setResume] = useState(null);
   const [url, setUrl] = useState("");
   const [data, setData] = useState(null);
@@ -15,6 +15,9 @@ const Resume = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    console.log(auth.currentUser);
+
     if (resume === null || url === "") {
       alert("At least one hast to be mandatory");
       return;

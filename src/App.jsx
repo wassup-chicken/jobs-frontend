@@ -1,22 +1,30 @@
 import "./App.css";
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
-import Form from "./components/Form";
+import {
+  browserLocalPersistence,
+  getAuth,
+  setPersistence,
+  signInWithEmailAndPassword,
+} from "firebase/auth";
+import Login from "./components/Login";
+import Signup from "./components/Signup";
 import Resume from "./components/Resume";
-import firebaseConfig from "./config/firebase";
+import FirebaseConfig from "./config/firebase";
 
 function App() {
   // Initialize Firebase
-  const app = initializeApp(firebaseConfig);
+  const app = initializeApp(FirebaseConfig);
 
   const auth = getAuth(app);
 
   return (
     <>
-      <Form />
+      <Login auth={auth} />
       <br />
-      <Resume />
+      <Signup auth={auth} />
+      <br />
+      <Resume auth={auth} />
     </>
   );
 }
