@@ -1,9 +1,17 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useAuth } from "../context/AuthContext";
+import { useNavigate } from "react-router-dom";
+import Error from "./Error";
+import Loading from "./Loading";
 
-const Resume = ({ auth }) => {
+const Resume = () => {
   const [resume, setResume] = useState(null);
   const [url, setUrl] = useState("");
   const [data, setData] = useState(null);
+  const [isLoading, setLoading] = useState(false);
+  const [isError, setError] = useState(null);
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
   const handleUrl = (e) => {
     setUrl(url + e.target.value);
@@ -13,13 +21,16 @@ const Resume = ({ auth }) => {
     setResume(e.target.files[0]);
   };
 
+  const handleReset = () => {
+    setData(null);
+    sessionStorage.removeItem("data");
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    console.log(auth.currentUser);
-
     if (resume === null || url === "") {
-      alert("At least one hast to be mandatory");
+      setError({ message: "can't be blank bruh" });
       return;
     }
 
@@ -27,49 +38,86 @@ const Resume = ({ auth }) => {
     formData.append("resume", resume);
     formData.append("url", url);
 
+    const token = await user.getIdToken();
+
     const req = {
       method: "POST",
       body: formData,
+      headers: { Authorization: `Bearer ` + token },
     };
     try {
-      const res = await fetch("http://localhost:8080/upload", req);
+      setLoading(true);
+      const res = await fetch(import.meta.env.VITE_API_URL + `/upload`, req);
       const data = await res.json();
 
       setData(data);
+      sessionStorage.setItem("data", JSON.stringify(data));
     } catch (e) {
-      console.log(e.message);
-      alert(e.message);
+      setError(e);
     }
+
+    setLoading(false);
   };
+
+  useEffect(() => {
+    if (!user) {
+      navigate("/");
+      return;
+    }
+    setLoading(false);
+    const storedData = sessionStorage.getItem("data");
+    if (storedData) {
+      setData(JSON.parse(storedData));
+    }
+  }, [user]);
+
+  if (isLoading) {
+    return (
+      <div className="p-24">
+        <Loading />
+      </div>
+    );
+  }
+
   return (
-    <>
+    <div className="p-24">
       {data ? (
         <>
           <h1 className="text-2xl align-text-top">AI Interview Prep</h1>
+          <div>
+            <div className="container flex flex-col gap-3 mt-5">
+              <h3 className="text-left text-2xl">Elevator Pitch: </h3>
+              <p className="text-left">{data?.elevator_pitch}</p>
+            </div>
+            <div className="container flex flex-col gap-3 mt-5">
+              <h3 className="text-left text-2xl">Job Summary: </h3>
+              <p className="text-left">{data?.jd}</p>
+            </div>
+            <div className="container flex flex-col gap-3 mt-5">
+              <h3 className="text-left text-2xl">Questions:</h3>
+              <p className="text-left">{data.questions[0]}</p>
+              <p className="text-left">{data.questions[1]}</p>
+              <p className="text-left">{data.questions[2]}</p>
+            </div>
 
-          <div>
-            <h3>Elevator Pitch: </h3>
-            <p>{data?.elevator_pitch}</p>
-          </div>
-          <div>
-            <h3>Job Summary: </h3>
-            <p>{data?.jd}</p>
-          </div>
-          <div>
-            <h3>Questions: </h3>
-            <ul>
-              <li>{data.questions[0]}</li>
-              <li>{data.questions[1]}</li>
-              <li>{data.questions[2]}</li>
-            </ul>
+            <button
+              onClick={handleReset}
+              type="button"
+              className="border-2 p-2 bg-emerald-400 m-5 rounded-sm"
+            >
+              Try Again
+            </button>
           </div>
         </>
       ) : (
-        <>
+        <div>
           <h1 className="text-2xl align-text-top">AI Interview Prep</h1>
-
+          {isError && <Error error={isError} />}
           <div className="flex justify-center">
-            <form className="flex flex-col w-md text-align text-left m-5 gap-1.5">
+            <form
+              onSubmit={handleSubmit}
+              className="flex flex-col w-md text-align text-left m-5 gap-1.5"
+            >
               <label htmlFor="url" className="m-0.5">
                 Job Description/URL
               </label>
@@ -94,17 +142,16 @@ const Resume = ({ auth }) => {
                 name="resume"
               />
               <button
-                type="button"
-                onClick={handleSubmit}
+                type="submit"
                 className="border-2 bg-emerald-400 m-3 rounded-sm"
               >
                 Submit
               </button>
             </form>
           </div>
-        </>
+        </div>
       )}
-    </>
+    </div>
   );
 };
 

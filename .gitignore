@@ -10,7 +10,7 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
-*.local
+.env*
 
 # Editor directories and files
 .vscode/*
@@ -23,4 +23,7 @@ dist-ssr
 *.sln
 *.sw?
 
+# Firebase config (contains sensitive keys)
 firebase.js
+**/firebase.js
+src/config/firebase.js

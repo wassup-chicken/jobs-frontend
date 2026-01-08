@@ -1,31 +1,43 @@
 import { useState } from "react";
 import { createUserWithEmailAndPassword } from "firebase/auth";
+import { Link } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import Error from "./Error";
 
-const Form = ({ auth }) => {
+const SignUp = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPw, setConfirmPw] = useState("");
+  const [isError, setError] = useState(null);
+
+  const { user, auth } = useAuth();
+
   const handleEmail = (e) => {
     setEmail(e.target.value);
+    setError(null);
   };
 
   const handlePassword = (e) => {
     setPassword(e.target.value);
+    setError(null);
   };
 
   const handleConfirmPw = (e) => {
     setConfirmPw(e.target.value);
+    setError(null);
   };
 
   const handleSubmit = (e) => {
+    e.preventDefault();
+
     //fetch authenticate
     if (email === "" || password === "" || confirmPw === "") {
-      alert("Gotta enter em!");
+      setError({ message: "can't be blank bruh" });
       return;
     }
 
     if (password !== confirmPw) {
-      alert("inconsistent password");
+      setError({ message: "be consistent bruh" });
       return;
     }
 
@@ -42,22 +54,20 @@ const Form = ({ auth }) => {
         setConfirmPw("");
       })
       .catch((error) => {
-        const errorCode = error.code;
-        const errorMsg = error.message;
-        alert(errorMsg);
         setEmail("");
         setPassword("");
         setConfirmPw("");
 
-        // alert(errorMsg);
+        setError(error);
       });
   };
 
   return (
     <>
-      <h1 className="text-2xl align-text-top">Sign Up</h1>
+      <h1 className="text-2xl align-text-top pt-24 m-10">Sign Up</h1>
+      {isError && <Error error={isError} />}
       <div className="flex justify-center">
-        <form className="flex flex-col m-2 w-md">
+        <form onSubmit={handleSubmit} className="flex flex-col m-2 w-md gap-2">
           <input
             onChange={handleEmail}
             id="email"
@@ -78,16 +88,23 @@ const Form = ({ auth }) => {
           />
           <input
             onChange={handleConfirmPw}
-            id="password"
-            name="password"
+            id="confirmpassword"
+            name="confirmpassword"
             className="border-2 m-0.5 rounded-sm p-1"
             type="password"
             value={confirmPw}
             placeholder="Confirm Password"
           />
+          <div>
+            <p>
+              Already have an account?{" "}
+              <Link className="text-emerald-500" to="/">
+                Login
+              </Link>
+            </p>
+          </div>
           <button
-            type="button"
-            onClick={handleSubmit}
+            type="submit"
             className="border-2 m-3 bg-emerald-400 rounded-sm"
           >
             Submit
@@ -98,4 +115,4 @@ const Form = ({ auth }) => {
   );
 };
 
-export default Form;
+export default SignUp;
