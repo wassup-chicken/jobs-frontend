@@ -42,25 +42,20 @@ const Form = () => {
       })
       .then(async (currentUser) => {
         // Signed in
-        // const user = userCredential.user;
+        const user = currentUser.user;
+
+        // Check if email is verified
+        if (!user.emailVerified) {
+          await signOut(auth);
+          setError({
+            message:
+              "Please verify your email before logging in. Check your inbox for the verification link.",
+          });
+          return;
+        }
+
         setEmail("");
         setPassword("");
-
-        const token = await currentUser.user.getIdToken();
-
-        const req = {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ` + token,
-          },
-        };
-
-        const res = await fetch(import.meta.env.VITE_API_URL + "/ping", req);
-
-        if (res.status !== 200) {
-          signOut(auth);
-          setError({ message: "user can't be validated!" });
-        }
       })
       .catch((error) => {
         setError(error);
@@ -110,7 +105,7 @@ const Form = () => {
             type="submit"
             className="border-2 m-3 bg-emerald-400 rounded-sm"
           >
-            Submit
+            Login
           </button>
         </form>
       </div>

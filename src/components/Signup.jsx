@@ -1,8 +1,12 @@
 import { useState } from "react";
-import { createUserWithEmailAndPassword } from "firebase/auth";
-import { Link } from "react-router-dom";
+import {
+  createUserWithEmailAndPassword,
+  sendEmailVerification,
+  signOut,
+} from "firebase/auth";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import Error from "./Error";
+import ErrorComponent from "./Error";
 
 const SignUp = () => {
   const [email, setEmail] = useState("");
@@ -11,6 +15,7 @@ const SignUp = () => {
   const [isError, setError] = useState(null);
 
   const { user, auth } = useAuth();
+  const navigate = useNavigate();
 
   const handleEmail = (e) => {
     setEmail(e.target.value);
@@ -42,16 +47,25 @@ const SignUp = () => {
     }
 
     createUserWithEmailAndPassword(auth, email, password)
-      .then((userCredential) => {
-        console.log(userCredential);
-        const user = userCredential.user;
-        console.log(user);
+      .then(async (currentUser) => {
+        const user = currentUser.user;
 
-        //navigate to log in to have them sign in again...
-        //send email to confirm then have them log in
+        // Send verification email first
+        try {
+          await sendEmailVerification(user);
+          console.log("verification email sent");
+        } catch (e) {
+          console.log("there was an error: " + e);
+        }
+
+        // Sign out user immediately - they need to verify email before logging in
+        await signOut(auth);
+
+        // Clear form and navigate to login
         setEmail("");
         setPassword("");
         setConfirmPw("");
+        navigate("/login");
       })
       .catch((error) => {
         setEmail("");
@@ -65,7 +79,7 @@ const SignUp = () => {
   return (
     <>
       <h1 className="text-2xl align-text-top pt-24 m-10">Sign Up</h1>
-      {isError && <Error error={isError} />}
+      {isError && <ErrorComponent error={isError} />}
       <div className="flex justify-center">
         <form onSubmit={handleSubmit} className="flex flex-col m-2 w-md gap-2">
           <input

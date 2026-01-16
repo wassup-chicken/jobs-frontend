@@ -18,7 +18,7 @@ const Navbar = () => {
           href={import.meta.env.VITE_BASE_URL}
           className="flex items-center space-x-3 rtl:space-x-reverse"
         >
-          <img src={aiinterview} className="h-15 w-30" alt="Flowbite Logo" />
+          <img src={aiinterview} className="h-15 w-30" alt="Logo" />
           <span className="self-center text-xl text-heading font-semibold whitespace-nowrap">
             AI Interview Prep
           </span>

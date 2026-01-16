@@ -13,8 +13,18 @@ const Resume = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
+  // Helper functions for sessionStorage (it only stores strings, so we need to stringify/parse)
+  const saveToSessionStorage = (key, value) => {
+    sessionStorage.setItem(key, JSON.stringify(value));
+  };
+
+  const getFromSessionStorage = (key) => {
+    const item = sessionStorage.getItem(key);
+    return item ? JSON.parse(item) : null;
+  };
+
   const handleUrl = (e) => {
-    setUrl(url + e.target.value);
+    setUrl(e.target.value);
   };
 
   const handleResume = (e) => {
@@ -51,7 +61,7 @@ const Resume = () => {
       const data = await res.json();
 
       setData(data);
-      sessionStorage.setItem("data", JSON.stringify(data));
+      saveToSessionStorage("data", data);
     } catch (e) {
       setError(e);
     }
@@ -65,11 +75,11 @@ const Resume = () => {
       return;
     }
     setLoading(false);
-    const storedData = sessionStorage.getItem("data");
+    const storedData = getFromSessionStorage("data");
     if (storedData) {
       setData(JSON.parse(storedData));
     }
-  }, [user]);
+  }, [user, navigate]);
 
   if (isLoading) {
     return (
@@ -95,9 +105,15 @@ const Resume = () => {
             </div>
             <div className="container flex flex-col gap-3 mt-5">
               <h3 className="text-left text-2xl">Questions:</h3>
-              <p className="text-left">{data.questions[0]}</p>
-              <p className="text-left">{data.questions[1]}</p>
-              <p className="text-left">{data.questions[2]}</p>
+              {data?.questions ? (
+                data.questions.map((question, index) => (
+                  <p key={index} className="text-left">
+                    {question}
+                  </p>
+                ))
+              ) : (
+                <p className="text-left">No questions available</p>
+              )}
             </div>
 
             <button
