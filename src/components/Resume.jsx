@@ -58,12 +58,60 @@ const Resume = () => {
     try {
       setLoading(true);
       const res = await fetch(import.meta.env.VITE_API_URL + `/upload`, req);
+      
+      // Check if response is ok (status 200-299)
+      if (!res.ok) {
+        let errorMessage = `Server error: ${res.status}`;
+        try {
+          const errorData = await res.json();
+          if (errorData?.error) {
+            errorMessage = errorData.error;
+          } else if (res.status === 401) {
+            errorMessage = "Authentication failed. Please try logging in again.";
+          } else if (res.status === 403) {
+            errorMessage = "Access forbidden. You may not have permission for this action.";
+          } else if (res.status === 404) {
+            errorMessage = "Endpoint not found. The server may be unavailable.";
+          } else if (res.status >= 500) {
+            errorMessage = "Server error. Please try again later.";
+          }
+        } catch {
+          // If response is not JSON, use status-based message
+          if (res.status === 401) {
+            errorMessage = "Authentication failed. Please try logging in again.";
+          } else if (res.status >= 500) {
+            errorMessage = "Server error. Please try again later.";
+          }
+        }
+        setError({ message: errorMessage });
+        setLoading(false);
+        return;
+      }
+
       const data = await res.json();
+
+      if (data?.error) {
+        setError({ message: data.error });
+        setLoading(false);
+        return;
+      }
 
       setData(data);
       saveToSessionStorage("data", data);
     } catch (e) {
-      setError(e);
+      console.log(e);
+      // Handle network errors and other fetch failures
+      let errorMessage = "An unexpected error occurred.";
+      
+      if (e instanceof TypeError && e.message === "Failed to fetch") {
+        errorMessage = "Network error: Unable to connect to the server. Please check your internet connection and try again.";
+      } else if (e.name === "AbortError") {
+        errorMessage = "Request was cancelled.";
+      } else if (e.message) {
+        errorMessage = `Error: ${e.message}`;
+      }
+      
+      setError({ message: errorMessage });
     }
 
     setLoading(false);
@@ -76,8 +124,8 @@ const Resume = () => {
     }
     setLoading(false);
     const storedData = getFromSessionStorage("data");
-    if (storedData) {
-      setData(JSON.parse(storedData));
+    if (storedData && !storedData?.error) {
+      setData(storedData);
     }
   }, [user, navigate]);
 
