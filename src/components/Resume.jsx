@@ -24,10 +24,28 @@ const Resume = () => {
   };
 
   const handleUrl = (e) => {
+    
     setUrl(e.target.value);
   };
 
   const handleResume = (e) => {
+    setError(null);
+
+    const currFile = e.target.files[0];
+
+    if (currFile && currFile.type) {
+      if (currFile.type !== 'application/pdf') {
+        setError({message : 'incorrect file type, please load again'});
+        return;
+      }
+      const maxFileSize = 5 * 1024 * 1024; 
+
+      if (currFile.size > maxFileSize) {
+        setError({ message : 'file size limit is 5mb, please load again'});
+        return;
+      }
+    }
+
     setResume(e.target.files[0]);
   };
 
@@ -89,12 +107,6 @@ const Resume = () => {
       }
 
       const data = await res.json();
-
-      if (data?.error) {
-        setError({ message: data.error });
-        setLoading(false);
-        return;
-      }
 
       setData(data);
       saveToSessionStorage("data", data);
