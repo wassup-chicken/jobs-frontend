@@ -20,7 +20,6 @@ const Resume = () => {
 
   const getFromSessionStorage = (key) => {
     const item = sessionStorage.getItem(key);
-    console.log('item: ', item);
     return item ? JSON.parse(item) : null;
   };
 

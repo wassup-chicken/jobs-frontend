@@ -122,9 +122,10 @@ jobs-app/
 │   ├── main.jsx             # Application entry point
 │   ├── index.css            # Global styles
 │   └── Navbar.jsx           # Navigation component
-├── dist/                     # Build output (generated)
+├── dist/                     # Build output (generated, not in git)
 ├── index.html                # HTML template
 ├── package.json              # Dependencies and scripts
+├── vercel.json               # Vercel configuration (SPA routing)
 ├── vite.config.js            # Vite configuration
 └── eslint.config.js          # ESLint configuration
 ```
@@ -183,30 +184,229 @@ server {
 
 ## Deployment
 
-### Vercel (Recommended)
+### Vercel (Current Production Setup)
+
+This frontend is currently deployed to Vercel. Here's how to deploy:
+
+#### Prerequisites
+
+1. **Vercel Account:** Sign up at [vercel.com](https://vercel.com)
+2. **GitHub Repository:** Push your code to GitHub (recommended)
+
+#### Initial Setup
+
+**Option 1: Via Vercel Dashboard (Recommended)**
+
+1. **Push code to GitHub:**
+   ```bash
+   git add .
+   git commit -m "Initial commit"
+   git push origin main
+   ```
+
+2. **Import project in Vercel:**
+   - Go to [Vercel Dashboard](https://vercel.com/dashboard)
+   - Click "Add New" → "Project"
+   - Import your GitHub repository
+   - Select the `jobs-app` directory (if repo is monorepo)
+
+3. **Configure build settings:**
+   - **Framework Preset:** Vite (auto-detected)
+   - **Build Command:** `npm run build` (default)
+   - **Output Directory:** `dist` (default)
+   - **Install Command:** `npm install` (default)
+
+4. **Set environment variables:**
+   - Go to Project Settings → Environment Variables
+   - Add the following:
+     ```
+     VITE_API_URL=https://your-cloudfront-url.cloudfront.net
+     ```
+   - Or for local backend: `VITE_API_URL=http://localhost:8080`
+
+5. **Deploy:**
+   - Click "Deploy"
+   - Vercel will build and deploy automatically
+
+**Option 2: Via Vercel CLI**
 
 1. **Install Vercel CLI:**
    ```bash
    npm install -g vercel
    ```
 
-2. **Deploy:**
+2. **Login:**
    ```bash
-   npm run build
-   vercel
+   vercel login
    ```
 
-3. **Set environment variable:**
-   - Go to Vercel dashboard → Project Settings → Environment Variables
-   - Add `VITE_API_URL` with your backend URL
-   - Redeploy to apply changes
+3. **Deploy:**
+   ```bash
+   cd jobs-app
+   vercel
+   ```
+   
+   Follow the prompts:
+   - Link to existing project? (No for first time)
+   - Project name: `jobs-app` (or your choice)
+   - Directory: `./` (if already in jobs-app)
+   - Override settings? (No, use defaults)
 
-**Or connect GitHub:**
-1. Push code to GitHub
-2. Import project in Vercel dashboard
-3. Set build command: `npm run build`
-4. Set output directory: `dist`
-5. Add `VITE_API_URL` environment variable
+4. **Set environment variables:**
+   ```bash
+   vercel env add VITE_API_URL
+   # Enter your backend URL when prompted
+   ```
+
+5. **Deploy to production:**
+   ```bash
+   vercel --prod
+   ```
+
+#### Environment Variables
+
+**Required:**
+- `VITE_API_URL` - Your backend API URL (e.g., `https://ds8f4k0khqfdn.cloudfront.net`)
+
+**Optional (if using Firebase env vars):**
+- `VITE_FIREBASE_API_KEY`
+- `VITE_FIREBASE_AUTH_DOMAIN`
+- `VITE_FIREBASE_PROJECT_ID`
+- `VITE_FIREBASE_STORAGE_BUCKET`
+- `VITE_FIREBASE_MESSAGING_SENDER_ID`
+- `VITE_FIREBASE_APP_ID`
+- `VITE_FIREBASE_MEASUREMENT_ID`
+
+**Setting via Dashboard:**
+1. Go to Project Settings → Environment Variables
+2. Add each variable
+3. Select environments (Production, Preview, Development)
+4. Click "Save"
+5. **Redeploy** for changes to take effect
+
+**Setting via CLI:**
+```bash
+vercel env add VITE_API_URL production
+# Enter value when prompted
+```
+
+#### SPA Routing Configuration
+
+The app uses `vercel.json` for SPA routing:
+
+```json
+{
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
+```
+
+This ensures all routes (like `/resume`, `/login`) serve `index.html` for client-side routing.
+
+**Note:** `vercel.json` is already configured in the project root.
+
+#### Build Configuration
+
+Vercel automatically detects Vite projects. Default settings:
+- **Build Command:** `npm run build`
+- **Output Directory:** `dist`
+- **Install Command:** `npm install`
+- **Node.js Version:** 18.x (auto-detected)
+
+To customize, create `vercel.json` with build settings:
+```json
+{
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "installCommand": "npm install",
+  "framework": "vite"
+}
+```
+
+#### Firebase Configuration
+
+The app uses Firebase for authentication. Configuration is in `src/config/firebase.js`:
+
+- **Client keys are public** - Safe to commit to Git
+- Firebase client keys are designed to be exposed in frontend code
+- Only backend service account keys need to be secret
+
+If you want to use environment variables instead:
+1. Update `firebase.js` to use `import.meta.env.VITE_FIREBASE_*`
+2. Set variables in Vercel dashboard
+3. Redeploy
+
+#### Custom Domain (Optional)
+
+1. Go to Project Settings → Domains
+2. Add your domain (e.g., `prep-jobs-ai.com`)
+3. Follow DNS configuration instructions
+4. Vercel will automatically provision SSL certificate
+
+#### Preview Deployments
+
+Every push to a branch creates a preview deployment:
+- **Preview URL:** `https://jobs-app-git-branch-name.vercel.app`
+- **Production URL:** `https://prep-jobs-ai.vercel.app` (or your custom domain)
+
+Preview deployments use the same environment variables as production (unless overridden).
+
+#### Troubleshooting
+
+**Build fails:**
+- Check build logs in Vercel dashboard
+- Ensure `package.json` has correct build script
+- Verify Node.js version (should be 18+)
+
+**Environment variables not working:**
+- **Important:** Vite env vars are embedded at **build time**
+- After adding/changing env vars, you **must redeploy**
+- Check variable names start with `VITE_`
+- Verify variables are set for correct environment (Production/Preview)
+
+**404 on page refresh:**
+- Ensure `vercel.json` has rewrite rules (already configured)
+- Check that SPA routing is enabled
+
+**CORS errors:**
+- Verify `VITE_API_URL` is correct
+- Check backend CORS settings include your Vercel domain
+- Backend should allow: `https://prep-jobs-ai.vercel.app`
+
+**Firebase auth not working:**
+- Verify Firebase config in `src/config/firebase.js`
+- Check Firebase Console → Authentication is enabled
+- Ensure Firebase project allows your Vercel domain
+
+#### Updating Deployment
+
+**After code changes:**
+```bash
+git add .
+git commit -m "Your changes"
+git push origin main
+```
+Vercel automatically deploys on push to main branch.
+
+**After environment variable changes:**
+1. Update in Vercel dashboard
+2. Go to Deployments tab
+3. Click "..." on latest deployment → "Redeploy"
+
+**Manual redeploy:**
+```bash
+vercel --prod
+```
+
+#### Production URL
+
+Your app is deployed at:
+- **Production:** `https://prep-jobs-ai.vercel.app`
+- Update backend `CORS_ORIGINS` to include this URL
 
 ### Netlify
 
@@ -288,7 +488,10 @@ The app uses Firebase Authentication. Configure your Firebase project:
 ### CORS errors
 
 1. **Check backend CORS settings:** Ensure your frontend URL is allowed
+   - CORS origin should be just the domain: `https://prep-jobs-ai.vercel.app`
+   - **Not** the full path: `https://prep-jobs-ai.vercel.app/resume` ❌
 2. **Verify API URL:** Make sure `VITE_API_URL` points to the correct backend
+3. **Check backend logs:** Backend should log CORS debugging info if enabled
 
 ### Firebase auth not working
 
@@ -299,7 +502,7 @@ The app uses Firebase Authentication. Configure your Firebase project:
 ### Routing issues after deployment
 
 For SPAs, ensure your hosting provider is configured to serve `index.html` for all routes:
-- **Vercel:** Automatic (no config needed)
+- **Vercel:** Configured via `vercel.json` (already set up)
 - **Netlify:** Create `_redirects` file: `/* /index.html 200`
 - **nginx:** Use `try_files $uri $uri/ /index.html;`
 
