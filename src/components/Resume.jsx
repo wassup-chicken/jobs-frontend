@@ -19,8 +19,21 @@ const Resume = () => {
   };
 
   const getFromSessionStorage = (key) => {
-    const item = sessionStorage.getItem(key);
-    return item ? JSON.parse(item) : null;
+    try {
+      const item = sessionStorage.getItem(key);
+      if (!item) return null;
+      
+      // Handle case where data might be double-stringified
+      let parsed = JSON.parse(item);
+      if (typeof parsed === 'string') {
+        // If it's still a string, parse again
+        parsed = JSON.parse(parsed);
+      }
+      return parsed;
+    } catch (e) {
+      console.error("Error parsing sessionStorage data:", e);
+      return null;
+    }
   };
 
   const handleUrl = (e) => {
@@ -135,10 +148,33 @@ const Resume = () => {
       return;
     }
     setLoading(false);
-    const storedData = getFromSessionStorage("data");
-    if (storedData && !storedData?.error) {
-      setData(storedData);
-    }
+    
+    // Load data from sessionStorage on mount
+    const loadStoredData = () => {
+      const storedData = getFromSessionStorage("data");
+      console.log("Loaded from sessionStorage:", storedData);
+      if (storedData && !storedData?.error) {
+        console.log("Setting data state:", storedData);
+        setData(storedData);
+      } else {
+        console.log("No valid data found in sessionStorage");
+      }
+    };
+    
+    loadStoredData();
+    
+    // Listen for storage changes (in case data is updated in another tab/window)
+    const handleStorageChange = (e) => {
+      if (e.key === "data") {
+        loadStoredData();
+      }
+    };
+    
+    window.addEventListener("storage", handleStorageChange);
+    
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+    };
   }, [user, navigate]);
 
   if (isLoading) {
