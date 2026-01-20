@@ -27,3 +27,4 @@ dist-ssr
 firebase.js
 **/firebase.js
 src/config/firebase.js
+.vercel
