@@ -16,26 +16,12 @@ const Resume = () => {
   // Helper functions for sessionStorage (it only stores strings, so we need to stringify/parse)
   const saveToSessionStorage = (key, value) => {
     sessionStorage.setItem(key, JSON.stringify(value));
-    // Dispatch custom event to notify same-tab listeners
-    window.dispatchEvent(new Event("sessionStorageUpdate"));
   };
 
   const getFromSessionStorage = (key) => {
-    try {
-      const item = sessionStorage.getItem(key);
-      if (!item) return null;
-      
-      // Handle case where data might be double-stringified
-      let parsed = JSON.parse(item);
-      if (typeof parsed === 'string') {
-        // If it's still a string, parse again
-        parsed = JSON.parse(parsed);
-      }
-      return parsed;
-    } catch (e) {
-      console.error("Error parsing sessionStorage data:", e);
-      return null;
-    }
+    const item = sessionStorage.getItem(key);
+    console.log('item: ', item);
+    return item ? JSON.parse(item) : null;
   };
 
   const handleUrl = (e) => {
@@ -122,10 +108,8 @@ const Resume = () => {
       }
 
       const data = await res.json();
-
-      // Save to sessionStorage first, then update state
-      saveToSessionStorage("data", data);
       setData(data);
+      saveToSessionStorage("data", data);
     } catch (e) {
       console.log(e);
       // Handle network errors and other fetch failures
@@ -151,42 +135,10 @@ const Resume = () => {
       return;
     }
     setLoading(false);
-    
-    // Load data from sessionStorage on mount
-    const loadStoredData = () => {
-      const storedData = getFromSessionStorage("data");
-      console.log("Loaded from sessionStorage:", storedData);
-      if (storedData && !storedData?.error) {
-        console.log("Setting data state:", storedData);
-        setData(storedData);
-      } else {
-        console.log("No valid data found in sessionStorage");
-      }
-    };
-    
-    // Load immediately on mount
-    loadStoredData();
-    
-    // Also listen for custom storage events (for same-tab updates)
-    const handleCustomStorageChange = () => {
-      loadStoredData();
-    };
-    
-    // Listen for storage changes from other tabs/windows
-    const handleStorageChange = (e) => {
-      if (e.key === "data") {
-        loadStoredData();
-      }
-    };
-    
-    // Custom event for same-tab updates (we'll dispatch this after saving)
-    window.addEventListener("sessionStorageUpdate", handleCustomStorageChange);
-    window.addEventListener("storage", handleStorageChange);
-    
-    return () => {
-      window.removeEventListener("sessionStorageUpdate", handleCustomStorageChange);
-      window.removeEventListener("storage", handleStorageChange);
-    };
+    const storedData = getFromSessionStorage("data");
+    if (storedData && !storedData?.error) {
+      setData(storedData);
+    }
   }, [user, navigate]);
 
   if (isLoading) {
