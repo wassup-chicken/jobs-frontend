@@ -16,6 +16,8 @@ const Resume = () => {
   // Helper functions for sessionStorage (it only stores strings, so we need to stringify/parse)
   const saveToSessionStorage = (key, value) => {
     sessionStorage.setItem(key, JSON.stringify(value));
+    // Dispatch custom event to notify same-tab listeners
+    window.dispatchEvent(new Event("sessionStorageUpdate"));
   };
 
   const getFromSessionStorage = (key) => {
@@ -121,8 +123,9 @@ const Resume = () => {
 
       const data = await res.json();
 
-      setData(data);
+      // Save to sessionStorage first, then update state
       saveToSessionStorage("data", data);
+      setData(data);
     } catch (e) {
       console.log(e);
       // Handle network errors and other fetch failures
@@ -161,18 +164,27 @@ const Resume = () => {
       }
     };
     
+    // Load immediately on mount
     loadStoredData();
     
-    // Listen for storage changes (in case data is updated in another tab/window)
+    // Also listen for custom storage events (for same-tab updates)
+    const handleCustomStorageChange = () => {
+      loadStoredData();
+    };
+    
+    // Listen for storage changes from other tabs/windows
     const handleStorageChange = (e) => {
       if (e.key === "data") {
         loadStoredData();
       }
     };
     
+    // Custom event for same-tab updates (we'll dispatch this after saving)
+    window.addEventListener("sessionStorageUpdate", handleCustomStorageChange);
     window.addEventListener("storage", handleStorageChange);
     
     return () => {
+      window.removeEventListener("sessionStorageUpdate", handleCustomStorageChange);
       window.removeEventListener("storage", handleStorageChange);
     };
   }, [user, navigate]);
